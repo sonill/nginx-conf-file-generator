@@ -237,7 +237,7 @@ server {
     # PHP handling for Laravel
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;  # Adjust to your PHP-FPM version/socket
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;  # Adjust to your PHP-FPM version/socket
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         include fastcgi_params;
     }
