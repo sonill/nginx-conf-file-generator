@@ -71,41 +71,47 @@ function showError(message) {
 }
 
 function generateNextjsNginxConfig(
-	appName,
-	rootPath,
-	serverNames,
-	port,
-	useHttps = false
+    appName,
+    rootPath,
+    serverNames,
+    port,
+    useHttps = false
 ) {
-	const domainList = serverNames.trim();
-	const primaryDomain = domainList.split(' ')[0];
+    const domainList = serverNames.trim();
+    const primaryDomain = domainList.split(' ')[0];
 
-	const httpsRedirectBlock = useHttps
-		? `
+    const httpsRedirectBlock = useHttps
+        ? `
 server {
     listen 80;
     server_name ${domainList};
     return 301 https://$host$request_uri;
 }
-	`
-		: '';
+        `
+        : '';
 
-	const listenBlock = useHttps
-		? `
+    const listenBlock = useHttps
+        ? `
     listen 443 ssl;
     ssl_certificate /etc/letsencrypt/live/${primaryDomain}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${primaryDomain}/privkey.pem;
-	`
-		: `
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_dhparam /etc/ssl/certs/dhparam.pem;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256';
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+        `
+        : `
     listen 80;
     listen [::]:80;
-	`;
+`;
 
-	return `${httpsRedirectBlock}
+    return `${httpsRedirectBlock}
 server {
     ${listenBlock}
     server_name ${domainList};
-
     root ${rootPath};
 
     gzip on;
@@ -114,6 +120,7 @@ server {
     gzip_min_length 1000;
     gzip_proxied any;
 
+    # Handle proxying to Next.js app
     location / {
         proxy_pass http://localhost:${port};
         proxy_http_version 1.1;
@@ -125,12 +132,14 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
 
+        # Timeout settings for proxy
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
         send_timeout 60s;
     }
 
+    # Static file handling for Next.js
     location /_next/static/ {
         alias ${rootPath}/.next/static/;
         access_log off;
@@ -153,16 +162,19 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 
+    # Error pages
     error_page 500 502 503 504 /500.html;
     error_page 404 /404.html;
     location = /500.html { internal; }
     location = /404.html { internal; }
 
+    # Security headers
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
     add_header X-XSS-Protection "1; mode=block";
     add_header Referrer-Policy "strict-origin-when-cross-origin";
 
+    # Security: Deny access to sensitive files
     location ~ /\.(?!well-known) {
         deny all;
         access_log off;
@@ -174,30 +186,42 @@ server {
         access_log off;
         log_not_found off;
     }
+
+    # File upload limit (adjust as needed)
+    client_max_body_size 100M;  # Max upload size set to 100MB
+
+    # Timeout settings for better performance
+    client_body_timeout 60s;     # Timeout for receiving the client body
+    client_header_timeout 60s;   # Timeout for receiving the client header
+    keepalive_timeout 65s;       # Timeout for keep-alive connections
+    send_timeout 60s;            # Timeout for sending response to client
+
+    # Enable HTTP/2 for better performance (optional)
+    # listen 443 ssl http2;
+}`;
 }
-`;
-}
+
 
 function generateLaravelNginxConfig(
-	appName,
-	rootPath,
-	serverNames,
-	useHttps = false
+    appName,
+    rootPath,
+    serverNames,
+    useHttps = false
 ) {
-	const primaryDomain = serverNames.split(' ')[0];
+    const primaryDomain = serverNames.split(' ')[0];
 
-	const httpsRedirectBlock = useHttps
-		? `
+    const httpsRedirectBlock = useHttps
+        ? `
 server {
     listen 80;
     server_name ${serverNames};
     return 301 https://$host$request_uri;
 }
-	`
-		: '';
+        `
+        : '';
 
-	const protocolBlock = useHttps
-		? `
+    const protocolBlock = useHttps
+        ? `
     listen 443 ssl;
     ssl_certificate /etc/letsencrypt/live/${primaryDomain}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${primaryDomain}/privkey.pem;
@@ -208,13 +232,13 @@ server {
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 1d;
     ssl_session_tickets off;
-	`
-		: `
+        `
+        : `
     listen 80;
     listen [::]:80;
-	`;
+`;
 
-	return `${httpsRedirectBlock}
+    return `${httpsRedirectBlock}
 server {
     ${protocolBlock}
     server_name ${serverNames};
@@ -281,11 +305,24 @@ server {
         try_files \$uri \$uri/ =404;
     }
 
+    # Increase file upload limit (adjust as per your requirement)
+    client_max_body_size 100M;  # Max upload size set to 100MB
+
+    # Timeout settings for better performance
+    client_body_timeout 60s;     # Timeout for receiving the client body
+    client_header_timeout 60s;   # Timeout for receiving the client header
+    keepalive_timeout 65s;       # Timeout for keep-alive connections
+    send_timeout 60s;            # Timeout for sending response to client
+
     # Logging configuration (optional, for better observability)
     access_log /var/log/nginx/${appName}_access.log;
     error_log /var/log/nginx/${appName}_error.log;
+
+    # Enable HTTP/2 for better performance (optional)
+    # listen 443 ssl http2;
 }`;
 }
+
 
 function generatePm2Script(appName, rootPath, port) {
 	return `#!/bin/bash
