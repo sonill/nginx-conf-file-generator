@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nginx Conf File Generator : Sanil.com.np</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .checkbox-group {
+            margin: 15px 0;
+        }
+
+        .checkbox-group label {
+            display: inline;
+            font-weight: normal;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .divider {
+            border-top: 1px solid #eee;
+            margin: 30px 0;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Nginx Conf File Generator</h1>
+    <p>Generate Nginx config for laravel or Next.js app.</p>
+
+    <div class="form-group">
+        <label for="appName">App Name</label>
+        <input type="text" id="appName" placeholder="e.g., MyAwesomeApp">
+    </div>
+
+    <div class="form-group">
+        <label for="rootPath">Root Folder Path</label>
+        <input type="text" id="rootPath" placeholder="e.g., /var/www/my-awesome-app">
+    </div>
+
+    <div class="form-group">
+        <label for="serverNames">Server Names (space separated)</label>
+        <input type="text" id="serverNames" placeholder="e.g., example.com www.example.com">
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="generateNginx" checked>
+        <label for="generateNginx">Generate Nginx Config for Laravel App.</label>
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="generateHttps" checked>
+        <label for="generateHttps">use HTTPS</label>
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="generatePm2">
+        <label for="generatePm2">Generate PM2 Deployment Script for NextJs App. This will modify conf file to support
+            NextJs app.</label>
+    </div>
+
+    <div class="form-group" id="portGroup" style="display: none;">
+        <label for="port">Port Number</label>
+        <input type="number" id="port" placeholder="e.g., 3000" min="1024" max="65535">
+    </div>
+
+    <div id="errorMessage" class="error-message"></div>
+
+    <div class="divider"></div>
+
+    <button onclick="generateScripts()">Generate Scripts</button>
+
+    <div id="nginxResult" class="result">
+        <h3>Nginx Configuration</h3>
+        <textarea id="nginxConfig" style="height: 300px;" readonly></textarea>
+        <button onclick="copyToClipboard('nginxConfig')">Copy to Clipboard</button>
+    </div>
+
+    <div id="pm2Result" class="result">
+        <h3>PM2 Deployment Script</h3>
+        <textarea id="pm2Script" style="height: 300px;" readonly></textarea>
+        <button onclick="copyToClipboard('pm2Script')">Copy to Clipboard</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
